@@ -23,6 +23,35 @@ enum MessageType {
   Post = 16, // Moment, Channel, Tweet, etc
 }
 
+type Asker = {
+  room_id: string,
+  askTime: number
+}
+
+type ItemWithTimer<T> = {
+  item: T;
+  timerId: ReturnType<typeof setTimeout>;
+};
+
+function addItemWithTimer<T>(
+  array: ItemWithTimer<T>[],
+  item: T,
+  timeout: number,
+  onTimeout?: (item: T) => void
+): void {
+  const timerId = setTimeout(() => {
+    const index = array.findIndex((el) => el.timerId === timerId);
+    if (index !== -1) {
+      const { item } = array[index];
+      array.splice(index, 1);
+      onTimeout?.(item);
+    }
+  }, timeout);
+  array.push({ item, timerId });
+}
+
+const askers: Asker[] = []
+const askerWithTimers: ItemWithTimer<Asker>[] = [];
 const SINGLE_MESSAGE_MAX_SIZE = 500;
 export class ChatGPTBot {
   // Record talkid with conversation id
@@ -154,6 +183,20 @@ export class ChatGPTBot {
     const room = message.room();
     const messageType = message.type();
     const privateChat = !room;
+    const askTime = message.date().getTime()
+
+    const timeOut = 2 * 60 * 1000
+
+
+    const askerWithTimer = askerWithTimers.find((askerWithTimer) => askerWithTimer.item.room_id === room?.id + "_" + talker.id);
+    if (!!room && askerWithTimer) {
+
+      const text = this.cleanMessage(rawText, privateChat);
+      askerWithTimer.item.askTime = askTime
+      return await this.onGroupMessage(talker, text, room);
+
+    }
+
     if (this.isNonsense(talker, messageType, rawText)) {
       return;
     }
@@ -162,6 +205,12 @@ export class ChatGPTBot {
       if (privateChat) {
         return await this.onPrivateMessage(talker, text);
       } else {
+        const asker: Asker = {
+          room_id: room.id + "_" + talker.id,
+          askTime: askTime
+        }
+        addItemWithTimer(askerWithTimers, asker, timeOut)
+        
         return await this.onGroupMessage(talker, text, room);
       }
     } else {
