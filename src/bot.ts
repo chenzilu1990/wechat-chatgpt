@@ -173,6 +173,7 @@ export class ChatGPTBot {
     room: RoomInterface
   ) {
     const talkerId = room.id + talker.id;
+    await this.trySay(room, `${text}\n ------\n ${"稍等"}`);
     const gptMessage = await this.getGPTMessage(text, talkerId);
     const result = `${text}\n ------\n ${gptMessage}`;
     await this.trySay(room, result);
