@@ -60,6 +60,8 @@ export class ChatGPTBot {
   chatTiggerRule = config.chatTiggerRule? new RegExp(config.chatTiggerRule): undefined;
   botName: string = "";
   ready = false;
+  stopIds: string[] = []
+
   setBotName(botName: string) {
     this.botName = botName;
   }
@@ -160,9 +162,13 @@ export class ChatGPTBot {
       text.includes("/cgi-bin/mmwebwx-bin/webwxgetpubliclinkimg")
     );
   }
-
+  
+  
   async onPrivateMessage(talker: ContactInterface, text: string) {
     const talkerId = talker.id;
+    const index = this.stopIds.findIndex(id => id === talkerId);
+    if ( index !== -1) return
+    await this.trySay(talker, "稍等");
     const gptMessage = await this.getGPTMessage(text, talkerId);
     await this.trySay(talker, gptMessage);
   }

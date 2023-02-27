@@ -38,6 +38,36 @@ async function main() {
         await message.say("pong");
         return;
       }
+      if (message.text().startsWith("滚蛋")) {
+        const talkerID = message.talker().id
+        const index = chatGPTBot.stopIds.findIndex((id) => id === talkerID)
+        if ( index !== -1) {
+          await message.say("我已经滚到天边了");
+        } else {
+          chatGPTBot.stopIds.push(message.talker().id)
+          await message.say("我最会滚蛋了，这就滚");
+        }
+        return;
+      }
+
+      if (message.text().startsWith("回来")) {
+        const talkerID = message.talker().id
+        const index = chatGPTBot.stopIds.findIndex((id) => id === talkerID)
+        if (index !== -1) {
+          chatGPTBot.stopIds.splice(index)
+          await message.say("我又回来了,现在你可以问我问题了");
+        } else {
+          await message.say("我在,你可以问我问题了");
+        }
+        return;
+      }
+
+      if (message.text().startsWith("天王盖地虎")) {
+        await message.say("宝塔镇河妖");
+        return;
+      }
+
+
       try {
         console.log(`Message: ${message}`);
         await chatGPTBot.onMessage(message);
